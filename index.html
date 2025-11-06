@@ -8,6 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <!-- Tambahkan di dalam <head> tag -->
 <link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E💰%3C/text%3E%3C/svg%3E">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="FinSmart">
@@ -282,7 +283,6 @@
             background: white;
             border-top: 1px solid #E5E7EB;
             display: flex;
-            justify-around;
             padding: 12px 0;
             z-index: 20;
         }
@@ -1423,9 +1423,9 @@
         // Initialize app
         loadHomeScreen();
         
-        if ('serviceWorker' in navigator) {
+       if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
+        navigator.serviceWorker.register('./sw.js')
             .then(registration => {
                 console.log('Service Worker registered:', registration);
             })

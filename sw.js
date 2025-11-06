@@ -1,7 +1,7 @@
 const CACHE_NAME = 'finsmart-v1';
 const urlsToCache = [
-  '/',
-  '/index.html'
+  './',
+  './index.html'
 ];
 
 // Install Service Worker
