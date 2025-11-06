@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#3B82F6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- Tambahkan di dalam <head> tag -->
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="FinSmart">
+    <title>FinSmart - Smart Finance</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #F9FAFB;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .app-container {
+            max-width: 450px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 70px;
+        }
+        .header {
+            background: linear-gradient(135deg, #3B82F6, #9333EA);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .header h1 { font-size: 20px; font-weight: 600; }
+        .header-actions {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .settings-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .balance-card {
+            background: linear-gradient(135deg, #3B82F6, #9333EA);
+            margin: 16px;
+            padding: 24px;
+            border-radius: 16px;
+            color: white;
+        }
+        .balance-label { font-size: 14px; opacity: 0.9; }
+        .balance-amount { font-size: 36px; font-weight: bold; margin-top: 8px; }
+        .summary-row { display: flex; margin-top: 16px; gap: 16px; }
+        .summary-item { flex: 1; }
+        .summary-label { font-size: 12px; opacity: 0.8; }
+        .summary-amount { font-size: 18px; font-weight: 600; margin-top: 4px; }
+        
+        .alert {
+            background: #FEF3C7;
+            border: 1px solid #FCD34D;
+            margin: 16px;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        .alert-title { font-weight: 600; color: #92400E; font-size: 14px; }
+        .alert-text { color: #92400E; font-size: 12px; margin-top: 4px; }
+        
+        .section { padding: 16px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .section-title { font-weight: 600; font-size: 16px; }
+        
+        .transaction-card {
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .tx-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+        .tx-icon { font-size: 24px; }
+        .tx-name { font-weight: 500; font-size: 14px; }
+        .tx-time { color: #9CA3AF; font-size: 12px; margin-top: 2px; }
+        .tx-amount { font-weight: 600; font-size: 14px; }
+        .tx-delete {
+            background: #EF4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 10px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-top: 4px;
+        }
+        .badge-needs { background: #DBEAFE; color: #1E40AF; }
+        .badge-wants { background: #F3E8FF; color: #6B21A8; }
+        .badge-income { background: #D1FAE5; color: #065F46; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9CA3AF;
+        }
+        .empty-icon { font-size: 48px; margin-bottom: 12px; }
+        .empty-text { font-size: 14px; }
+        
+        .templates-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .template-card {
+            background: linear-gradient(135deg, #F3E8FF, #FCE7F3);
+            border: 1px solid #C084FC;
+            border-radius: 8px;
+            padding: 12px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            position: relative;
+        }
+        .template-card:active { transform: scale(0.95); }
+        .template-icon { font-size: 24px; margin-bottom: 4px; }
+        .template-name { font-size: 10px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .template-amount { font-size: 10px; color: #7C3AED; font-weight: bold; }
+        .template-delete {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: #EF4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        
+        .amount-display {
+            text-align: center;
+            padding: 24px;
+        }
+        .amount-value { font-size: 48px; font-weight: bold; color: #1F2937; }
+        .amount-label { color: #9CA3AF; font-size: 14px; margin-top: 8px; }
+        
+        .number-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            padding: 16px;
+        }
+        .number-btn {
+            background: #F3F4F6;
+            border: none;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .number-btn:active { background: #D1D5DB; }
+        
+        .input-section { padding: 16px; }
+        .input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #D1D5DB;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        
+        .category-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .category-btn {
+            background: #F3F4F6;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .category-btn.active { background: #3B82F6; color: white; }
+        
+        .type-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .type-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #D1D5DB;
+            border-radius: 8px;
+            background: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .type-btn.needs { border-color: #3B82F6; background: #EFF6FF; color: #1E40AF; }
+        .type-btn.wants { border-color: #9333EA; background: #F5F3FF; color: #6B21A8; }
+        
+        .action-buttons { display: flex; gap: 8px; margin-bottom: 8px; }
+        .add-btn {
+            flex: 1;
+            background: linear-gradient(135deg, #3B82F6, #9333EA);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .add-btn.income-btn {
+            background: linear-gradient(135deg, #10B981, #059669);
+        }
+        .add-btn:active { transform: scale(0.95); }
+        .save-template-btn {
+            background: #FEF3C7;
+            border: 2px solid #FBBF24;
+            padding: 16px;
+            border-radius: 8px;
+            width: 56px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .save-template-btn:active { transform: scale(0.95); }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 450px;
+            background: white;
+            border-top: 1px solid #E5E7EB;
+            display: flex;
+            justify-around;
+            padding: 12px 0;
+            z-index: 20;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: #9CA3AF;
+            text-decoration: none;
+            cursor: pointer;
+            padding: 8px 16px;
+            transition: color 0.2s;
+        }
+        .nav-item.active { color: #3B82F6; }
+        .nav-icon { font-size: 20px; }
+        .nav-label { font-size: 10px; }
+        
+        .stat-card {
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .stat-title { font-weight: 600; margin-bottom: 12px; }
+        .category-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .progress-bar {
+            height: 8px;
+            background: #E5E7EB;
+            border-radius: 4px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+        .progress { height: 100%; border-radius: 4px; transition: width 0.3s; }
+        .stats-row { display: flex; gap: 16px; }
+        .stat-item { flex: 1; text-align: center; }
+        .stat-value { font-size: 32px; font-weight: bold; color: #3B82F6; }
+        .stat-label { font-size: 12px; color: #6B7280; margin-top: 4px; }
+        
+        .goal-card {
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .goal-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .goal-icon { font-size: 32px; margin-right: 12px; }
+        .goal-info { flex: 1; }
+        .goal-name { font-weight: 600; font-size: 16px; }
+        .goal-progress { font-size: 12px; color: #6B7280; }
+        .goal-percentage { font-size: 18px; font-weight: bold; }
+        .goal-type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-top: 4px;
+        }
+        .goal-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .goal-btn {
+            flex: 1;
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .goal-btn:active { transform: scale(0.95); }
+        .goal-btn-add { background: #10B981; color: white; }
+        .goal-btn-delete { background: #EF4444; color: white; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .modal-btn-primary { background: #3B82F6; color: white; }
+        .modal-btn-secondary { background: #E5E7EB; color: #1F2937; }
+        
+        .settings-menu { padding: 16px; }
+        .settings-item {
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .settings-item:active { transform: scale(0.98); }
+        .settings-item-title { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+        .settings-item-desc { font-size: 12px; color: #6B7280; }
+        
+        .hidden { display: none !important; }
+        .btn-link {
+            background: none;
+            border: none;
+            color: #3B82F6;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <h1 id="headerTitle">FinSmart</h1>
+            <div class="header-actions">
+                <button class="settings-btn" onclick="toggleSettings()">⚙️</button>
+            </div>
+        </div>
+        
+        <!-- Home Screen -->
+        <div id="homeScreen" class="screen">
+            <div class="balance-card">
+                <div class="balance-label">Total Balance</div>
+                <div class="balance-amount" id="totalBalance">Rp 0</div>
+                <div class="summary-row">
+                    <div class="summary-item">
+                        <div class="summary-label">This Week</div>
+                        <div class="summary-amount" id="weekSpending">Rp 0</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">This Month</div>
+                        <div class="summary-amount" id="monthSpending">Rp 0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alert" id="alertBox">
+                <div class="alert-title">⚠️ Spending Alert</div>
+                <div class="alert-text" id="alertText">Start tracking your expenses!</div>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">Recent Transactions</div>
+                </div>
+                <div id="transactionsList"></div>
+            </div>
+        </div>
+        
+        <!-- Add Screen -->
+        <div id="addScreen" class="screen hidden">
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">⚡ Quick Add</div>
+                    <button id="toggleTemplates" class="btn-link">Show All</button>
+                </div>
+                <div class="templates-grid" id="templatesGrid"></div>
+            </div>
+            
+            <div class="amount-display">
+                <div class="amount-value" id="amountDisplay">Rp 0</div>
+                <div class="amount-label">Enter amount</div>
+            </div>
+            
+            <div class="number-pad" id="numberPad"></div>
+            
+            <div class="input-section">
+                <input type="text" class="input" id="descriptionInput" placeholder="Description (e.g., Lunch)">
+                
+                <div class="category-buttons" id="categoryButtons"></div>
+                
+                <div class="type-buttons">
+                    <button class="type-btn needs" id="needsBtn">Needs</button>
+                    <button class="type-btn" id="wantsBtn">Wants</button>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="add-btn" id="addExpenseBtn">Add Expense</button>
+                    <button class="save-template-btn" id="saveTemplateBtn">⭐</button>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="add-btn income-btn" id="addIncomeBtn">💰 Add Income</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stats Screen -->
+        <div id="statsScreen" class="screen hidden">
+            <div class="section">
+                <div class="stat-card">
+                    <div class="stat-title">Spending by Category</div>
+                    <div id="categoryStats"></div>
+                </div>
+                
+                <div class="stat-card" style="background: linear-gradient(135deg, #ECFDF5, #D1FAE5);">
+                    <div class="stat-title">Needs vs Wants</div>
+                    <div class="stats-row">
+                        <div class="stat-item">
+                            <div class="stat-value" style="color: #10B981;" id="needsPercent">0%</div>
+                            <div class="stat-label">Needs</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" style="color: #9333EA;" id="wantsPercent">0%</div>
+                            <div class="stat-label">Wants</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert" style="background: #FEE2E2; border-color: #FCA5A5;">
+                    <div class="alert-title" style="color: #991B1B;">🔴 Spending Alert</div>
+                    <div class="alert-text" style="color: #991B1B;" id="runoutText">Start spending to see predictions</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Goals Screen -->
+        <div id="goalsScreen" class="screen hidden">
+            <div class="section">
+                <button class="add-btn" style="width: 100%; margin-bottom: 16px;" onclick="openAddGoalModal()">
+                    + Add New Goal
+                </button>
+                <div id="goalsList"></div>
+            </div>
+        </div>
+        
+        <!-- Settings Screen -->
+        <div id="settingsScreen" class="screen hidden">
+            <div class="settings-menu">
+                <div class="settings-item" onclick="factoryReset()">
+                    <div class="settings-item-title">🔄 Factory Reset</div>
+                    <div class="settings-item-desc">Delete all data and start fresh</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <div class="nav-item active" data-screen="home">
+                <div class="nav-icon">📱</div>
+                <div class="nav-label">Home</div>
+            </div>
+            <div class="nav-item" data-screen="add">
+                <div class="nav-icon">💵</div>
+                <div class="nav-label">Add</div>
+            </div>
+            <div class="nav-item" data-screen="stats">
+                <div class="nav-icon">📊</div>
+                <div class="nav-label">Stats</div>
+            </div>
+            <div class="nav-item" data-screen="goals">
+                <div class="nav-icon">🎯</div>
+                <div class="nav-label">Goals</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Goal Modal -->
+    <div id="addGoalModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Create New Goal</div>
+            <input type="text" class="input" id="goalNameInput" placeholder="Goal name (e.g., New Laptop)">
+            <input type="number" class="input" id="goalTargetInput" placeholder="Target amount (e.g., 8000000)">
+            
+            <div class="section-title" style="margin: 12px 0 8px 0; font-size: 14px;">Category</div>
+            <div class="category-buttons" id="goalCategoryButtons"></div>
+            
+            <div class="section-title" style="margin: 12px 0 8px 0; font-size: 14px;">Type</div>
+            <div class="type-buttons">
+                <button class="type-btn needs" id="goalNeedsBtn">Needs</button>
+                <button class="type-btn" id="goalWantsBtn">Wants</button>
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-secondary" onclick="closeAddGoalModal()">Cancel</button>
+                <button class="modal-btn modal-btn-primary" onclick="saveGoal()">Create Goal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Money to Goal Modal -->
+    <div id="addMoneyGoalModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title" id="addMoneyGoalTitle">Add Money to Goal</div>
+            <input type="text" class="input" id="goalDescriptionInput" placeholder="Note (e.g., Dari gaji bulan ini)">
+            <div class="amount-display">
+                <div class="amount-value" id="goalAmountDisplay">Rp 0</div>
+                <div class="amount-label">Enter amount</div>
+            </div>
+            <div class="number-pad" id="goalNumberPad"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-secondary" onclick="closeAddMoneyGoalModal()">Cancel</button>
+                <button class="modal-btn modal-btn-primary" onclick="addMoneyToGoal()">Add Money</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize data
+        let balance = parseInt(localStorage.getItem('balance')) || 0;
+        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+        let templates = JSON.parse(localStorage.getItem('templates')) || [];
+        let goals = JSON.parse(localStorage.getItem('goals')) || [];
+        
+        let currentAmount = 0;
+        let currentDescription = '';
+        let currentCategory = '';
+        let currentCategoryIcon = '';
+        let currentType = 'needs';
+        let showAllTemplates = false;
+        
+        let currentGoalAmount = 0;
+        let currentGoalId = null;
+        let currentGoalDescription = '';
+        let currentGoalType = 'needs';
+        
+        const categories = [
+            { name: 'Food', icon: '🍔' },
+            { name: 'Transport', icon: '🚌' },
+            { name: 'Housing', icon: '🏠' },
+            { name: 'Education', icon: '📚' },
+            { name: 'Entertainment', icon: '🎮' },
+            { name: 'Money', icon: '💰' }
+        ];
+        const goalCategories = [
+            { name: 'Emergency Fund', icon: '🆘' },
+            { name: 'Gadgets', icon: '💻' },
+            { name: 'Vacation', icon: '✈️' },
+            { name: 'Vehicle', icon: '🚗' },
+            { name: 'Education', icon: '🎓' },
+            { name: 'Investment', icon: '📈' },
+            { name: 'Home', icon: '🏠' },
+            { name: 'Health', icon: '🏥' },
+            { name: 'Wedding', icon: '💍' },
+            { name: 'Other', icon: '🎯' }
+        ];
+        
+        function saveData() {
+            localStorage.setItem('balance', balance);
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+            localStorage.setItem('templates', JSON.stringify(templates));
+            localStorage.setItem('goals', JSON.stringify(goals));
+        }
+        
+        // Time formatting function with full support
+        function formatTimeAgo(timestamp) {
+            const now = Date.now();
+            const time = new Date(timestamp).getTime();
+            const diff = now - time;
+            
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+            const weeks = Math.floor(diff / 604800000);
+            
+            if (minutes < 1) return 'Just now';
+            if (minutes === 1) return '1 minute ago';
+            if (minutes < 60) return `${minutes} minutes ago`;
+            if (hours === 1) return '1 hour ago';
+            if (hours < 24) return `${hours} hours ago`;
+            if (days === 1) return '1 day ago';
+            if (days < 7) return `${days} days ago`;
+            if (weeks === 1) return '1 week ago';
+            if (weeks < 4) return `${weeks} weeks ago`;
+            
+            // Show date for older transactions (after 1 month)
+            const date = new Date(timestamp);
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return `${date.getDate()} ${monthNames[date.getMonth()]}`;
+        }
+        
+        // Update time displays every minute
+        setInterval(() => {
+            const currentScreen = document.querySelector('.screen:not(.hidden)');
+            if (currentScreen && currentScreen.id === 'homeScreen') {
+                loadHomeScreen();
+            }
+        }, 60000);
+        
+        // Settings
+        window.toggleSettings = () => {
+            showScreen('settings');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        };
+        
+        window.factoryReset = () => {
+            if (confirm('⚠️ WARNING: This will delete ALL your data!\n\nAre you absolutely sure?')) {
+                if (confirm('This action cannot be undone. Proceed?')) {
+                    localStorage.clear();
+                    balance = 0;
+                    transactions = [];
+                    templates = [];
+                    goals = [];
+                    alert('✅ Factory reset complete!');
+                    showScreen('home');
+                    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                    document.querySelector('[data-screen="home"]').classList.add('active');
+                    loadHomeScreen();
+                }
+            }
+        };
+        
+        // Delete transaction with full reversal
+        window.deleteTransaction = (txId) => {
+            if (confirm('Delete this transaction?')) {
+                const tx = transactions.find(t => t.id === txId);
+                if (tx) {
+                    // Reverse the transaction amount
+                    balance -= tx.amount;
+                    
+                    // If it's a goal saving transaction, return money to goal
+                    if (tx.isGoalSaving && tx.goalId) {
+                        const goal = goals.find(g => g.id === tx.goalId);
+                        if (goal) {
+                            goal.current -= Math.abs(tx.amount);
+                            // Remove from goal's saving transactions
+                            if (goal.savingTransactions) {
+                                goal.savingTransactions = goal.savingTransactions.filter(s => s.txId !== txId);
+                            }
+                        }
+                    }
+                    
+                    transactions = transactions.filter(t => t.id !== txId);
+                    saveData();
+                    loadHomeScreen();
+                    alert('Transaction deleted! ✅');
+                }
+            }
+        };
+        
+        // Navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const screen = item.dataset.screen;
+                showScreen(screen);
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                item.classList.add('active');
+            });
+        });
+        
+        function showScreen(screenName) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById(screenName + 'Screen').classList.remove('hidden');
+            
+            const titles = { 
+                home: 'Home', 
+                add: 'Add Transaction', 
+                stats: 'Statistics', 
+                goals: 'Savings Goals',
+                settings: 'Settings'
+            };
+            document.getElementById('headerTitle').textContent = titles[screenName] || 'FinSmart';
+            
+            if (screenName === 'add') initAddScreen();
+            if (screenName === 'home') loadHomeScreen();
+            if (screenName === 'stats') loadStatsScreen();
+            if (screenName === 'goals') loadGoalsScreen();
+        }
+        
+        // Home Screen
+        function loadHomeScreen() {
+            const list = document.getElementById('transactionsList');
+            
+            if (transactions.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">💸</div>
+                        <div class="empty-text">No transactions yet.<br>Start by adding income or expenses!</div>
+                    </div>
+                `;
+            } else {
+                list.innerHTML = transactions.slice(0, 10).map(tx => {
+                    let icon = tx.icon;
+                    if (!icon) {
+                        if (tx.category === 'Income') icon = '💰';
+                        else if (tx.category === 'Food') icon = '🍔';
+                        else if (tx.category === 'Transport') icon = '🚌';
+                        else if (tx.category === 'Housing') icon = '🏠';
+                        else if (tx.category === 'Education') icon = '📚';
+                        else if (tx.category === 'Entertainment') icon = '🎮';
+                        else if (tx.category === 'Money') icon = '💰';
+                        else if (tx.category === 'Savings') icon = '🎯';
+                        else icon = '💸';
+                    }
+                    
+                    return `
+                    <div class="transaction-card">
+                        <div class="tx-left">
+                            <div class="tx-icon">${icon}</div>
+                            <div>
+                                <div class="tx-name">${tx.name}</div>
+                                <div class="tx-time">${formatTimeAgo(tx.timestamp)}</div>
+                            </div>
+                        </div>
+                        <div style="text-align: right; display: flex; align-items: center;">
+                            <div>
+                                <div class="tx-amount" style="color: ${tx.amount > 0 ? '#10B981' : '#EF4444'}">
+                                    ${tx.amount > 0 ? '+' : ''}Rp ${Math.abs(tx.amount).toLocaleString('id-ID')}
+                                </div>
+                                <div class="badge badge-${tx.type}">
+                                    ${tx.type === 'needs' ? 'Needs' : tx.type === 'wants' ? 'Wants' : 'Income'}
+                                </div>
+                            </div>
+                            <button class="tx-delete" onclick="deleteTransaction(${tx.id})">×</button>
+                        </div>
+                    </div>
+                `}).join('');
+            }
+            
+            document.getElementById('totalBalance').textContent = `Rp ${balance.toLocaleString('id-ID')}`;
+            
+            const now = Date.now();
+            const weekMs = 7 * 24 * 60 * 60 * 1000;
+            const weekSpending = transactions
+                .filter(t => t.amount < 0 && (now - new Date(t.timestamp).getTime()) < weekMs)
+                .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+            document.getElementById('weekSpending').textContent = `-Rp ${weekSpending.toLocaleString('id-ID')}`;
+            
+            const monthMs = 30 * 24 * 60 * 60 * 1000;
+            const monthSpending = transactions
+                .filter(t => t.amount < 0 && (now - new Date(t.timestamp).getTime()) < monthMs)
+                .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+            document.getElementById('monthSpending').textContent = `-Rp ${monthSpending.toLocaleString('id-ID')}`;
+            
+            const alertBox = document.getElementById('alertBox');
+            const alertText = document.getElementById('alertText');
+            
+            if (weekSpending === 0) {
+                alertText.textContent = 'No spending this week. Great start!';
+                alertBox.style.background = '#D1FAE5';
+                alertBox.style.borderColor = '#10B981';
+                alertBox.querySelector('.alert-title').style.color = '#065F46';
+                alertBox.querySelector('.alert-title').textContent = '✅ All Good!';
+                alertText.style.color = '#065F46';
+            } else {
+                alertText.textContent = `You've spent Rp ${weekSpending.toLocaleString('id-ID')} this week`;
+                alertBox.style.background = '#FEF3C7';
+                alertBox.style.borderColor = '#FCD34D';
+                alertBox.querySelector('.alert-title').style.color = '#92400E';
+                alertBox.querySelector('.alert-title').textContent = '⚠️ Weekly Alert!';
+                alertText.style.color = '#92400E';
+            }
+        }
+        
+        // Add Screen
+        function initAddScreen() {
+            renderTemplates();
+            renderNumberPad();
+            renderCategories();
+            updateAmountDisplay();
+            
+            document.getElementById('toggleTemplates').onclick = () => {
+                showAllTemplates = !showAllTemplates;
+                renderTemplates();
+                document.getElementById('toggleTemplates').textContent = showAllTemplates ? 'Hide' : 'Show All';
+            };
+            
+            document.getElementById('needsBtn').onclick = () => {
+                currentType = 'needs';
+                document.getElementById('needsBtn').classList.add('needs');
+                document.getElementById('wantsBtn').classList.remove('wants');
+            };
+            
+            document.getElementById('wantsBtn').onclick = () => {
+                currentType = 'wants';
+                document.getElementById('wantsBtn').classList.add('wants');
+                document.getElementById('needsBtn').classList.remove('needs');
+            };
+            
+            document.getElementById('addExpenseBtn').onclick = addExpense;
+            document.getElementById('addIncomeBtn').onclick = addIncome;
+            document.getElementById('saveTemplateBtn').onclick = saveTemplate;
+            
+            document.getElementById('descriptionInput').oninput = (e) => {
+                currentDescription = e.target.value;
+            };
+        }
+        
+        function renderTemplates() {
+            const grid = document.getElementById('templatesGrid');
+            
+            if (templates.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <div class="empty-icon">⭐</div>
+                        <div class="empty-text">No templates yet.<br>Save your favorite transactions!</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            const displayTemplates = showAllTemplates ? templates : templates.slice(0, 4);
+            grid.style.gridTemplateColumns = showAllTemplates ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)';
+            
+            grid.innerHTML = displayTemplates.map(t => `
+                <div class="template-card" onclick="applyTemplate(${t.id})">
+                    <button class="template-delete" onclick="event.stopPropagation(); deleteTemplate(${t.id})">×</button>
+                    <div class="template-icon">${t.icon}</div>
+                    <div class="template-name">${t.name}</div>
+                    <div class="template-amount">Rp ${t.amount.toLocaleString('id-ID')}</div>
+                </div>
+            `).join('');
+        }
+        
+        window.deleteTemplate = (id) => {
+            if (confirm('Delete this template?')) {
+                templates = templates.filter(t => t.id !== id);
+                saveData();
+                renderTemplates();
+            }
+        };
+        
+        window.applyTemplate = (id) => {
+            const template = templates.find(t => t.id === id);
+            if (template) {
+                currentAmount = template.amount;
+                currentDescription = template.name;
+                currentCategory = template.category;
+                currentCategoryIcon = template.icon;
+                currentType = template.type;
+                document.getElementById('descriptionInput').value = template.name;
+                updateAmountDisplay();
+                highlightCategory(template.category);
+                
+                if (template.type === 'needs') {
+                    document.getElementById('needsBtn').classList.add('needs');
+                    document.getElementById('wantsBtn').classList.remove('wants');
+                } else {
+                    document.getElementById('wantsBtn').classList.add('wants');
+                    document.getElementById('needsBtn').classList.remove('needs');
+                }
+            }
+        };
+        
+        function renderNumberPad() {
+            const pad = document.getElementById('numberPad');
+            const keys = ['1','2','3','4','5','6','7','8','9','0','00','⌫'];
+            pad.innerHTML = keys.map(k => `
+                <button class="number-btn" onclick="handleNumber('${k}')">${k}</button>
+            `).join('');
+        }
+        
+        window.handleNumber = (key) => {
+            if (key === '⌫') {
+                currentAmount = Math.floor(currentAmount / 10);
+            } else {
+                if (key === '00') {
+                    currentAmount = currentAmount * 100;
+                } else {
+                    currentAmount = currentAmount * 10 + parseInt(key);
+                }
+            }
+            updateAmountDisplay();
+        };
+        
+        function updateAmountDisplay() {
+            document.getElementById('amountDisplay').textContent = `Rp ${currentAmount.toLocaleString('id-ID')}`;
+        }
+        
+        function renderCategories() {
+            const container = document.getElementById('categoryButtons');
+            container.innerHTML = categories.map(cat => `
+                <button class="category-btn" onclick="selectCategory('${cat.name}', '${cat.icon}')">${cat.icon} ${cat.name}</button>
+            `).join('');
+        }
+        
+        window.selectCategory = (name, icon) => {
+            currentCategory = name;
+            currentCategoryIcon = icon;
+            highlightCategory(name);
+        };
+        
+        function highlightCategory(name) {
+            document.querySelectorAll('#categoryButtons .category-btn').forEach(btn => {
+                if (btn.textContent.includes(name)) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+        
+        function addExpense() {
+            if (!currentDescription || currentAmount === 0 || !currentCategory) {
+                alert('Please fill all fields');
+                return;
+            }
+            
+            const newTx = {
+                id: Date.now(),
+                name: currentDescription,
+                amount: -currentAmount,
+                type: currentType,
+                category: currentCategory,
+                icon: currentCategoryIcon,
+                timestamp: new Date().toISOString()
+            };
+            
+            transactions.unshift(newTx);
+            balance -= currentAmount;
+            saveData();
+            
+            alert('Expense added! ✅');
+            resetAddForm();
+        }
+        
+        function addIncome() {
+            if (!currentDescription || currentAmount === 0) {
+                alert('Please enter description and amount');
+                return;
+            }
+            
+            const newTx = {
+                id: Date.now(),
+                name: currentDescription,
+                amount: currentAmount,
+                type: 'income',
+                category: 'Income',
+                icon: '💰',
+                timestamp: new Date().toISOString()
+            };
+            
+            transactions.unshift(newTx);
+            balance += currentAmount;
+            saveData();
+            
+            alert('Income added! 💰');
+            resetAddForm();
+        }
+        
+        function resetAddForm() {
+            currentAmount = 0;
+            currentDescription = '';
+            currentCategory = '';
+            currentCategoryIcon = '';
+            currentType = 'needs';
+            document.getElementById('descriptionInput').value = '';
+            document.getElementById('needsBtn').classList.add('needs');
+            document.getElementById('wantsBtn').classList.remove('wants');
+            document.querySelectorAll('#categoryButtons .category-btn').forEach(btn => btn.classList.remove('active'));
+            updateAmountDisplay();
+        }
+        
+        function saveTemplate() {
+            if (!currentDescription || currentAmount === 0 || !currentCategory) {
+                alert('Please fill all fields first');
+                return;
+            }
+            
+            const newTemplate = {
+                id: Date.now(),
+                name: currentDescription,
+                amount: currentAmount,
+                category: currentCategory,
+                type: currentType,
+                icon: currentCategoryIcon
+            };
+            
+            templates.push(newTemplate);
+            saveData();
+            alert('Template saved! ⭐');
+            renderTemplates();
+        }
+        
+        // Stats Screen
+        function loadStatsScreen() {
+            const categoryStats = {};
+            let needsTotal = 0;
+            let wantsTotal = 0;
+            
+            transactions.forEach(tx => {
+                if (tx.amount < 0) {
+                    const cat = tx.category;
+                    categoryStats[cat] = (categoryStats[cat] || 0) + Math.abs(tx.amount);
+                    
+                    if (tx.type === 'needs') needsTotal += Math.abs(tx.amount);
+                    if (tx.type === 'wants') wantsTotal += Math.abs(tx.amount);
+                }
+            });
+            
+            const total = needsTotal + wantsTotal;
+            const needsPercent = total > 0 ? Math.round((needsTotal / total) * 100) : 0;
+            const wantsPercent = total > 0 ? Math.round((wantsTotal / total) * 100) : 0;
+            
+            document.getElementById('needsPercent').textContent = needsPercent + '%';
+            document.getElementById('wantsPercent').textContent = wantsPercent + '%';
+            
+            const colors = {
+                'Food': '#EF4444',
+                'Entertainment': '#9333EA',
+                'Transport': '#3B82F6',
+                'Education': '#10B981',
+                'Housing': '#F59E0B',
+                'Money': '#FBBF24',
+                'Savings': '#8B5CF6'
+            };
+            
+            const statsContainer = document.getElementById('categoryStats');
+            
+            if (Object.keys(categoryStats).length === 0) {
+                statsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📊</div>
+                        <div class="empty-text">No spending data yet</div>
+                    </div>
+                `;
+            } else {
+                const statsHtml = Object.entries(categoryStats)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([cat, amount]) => {
+                        const percent = total > 0 ? Math.round((amount / total) * 100) : 0;
+                        return `
+                            <div class="category-row">
+                                <span>${cat}</span>
+                                <span style="font-weight: 600;">Rp ${amount.toLocaleString('id-ID')}</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: ${percent}%; background: ${colors[cat] || '#6B7280'};"></div>
+                            </div>
+                            <div style="margin-bottom: 12px;"></div>
+                        `;
+                    }).join('');
+                
+                statsContainer.innerHTML = statsHtml;
+            }
+            
+            const now = Date.now();
+            const last7Days = transactions.filter(tx => 
+                tx.amount < 0 && (now - new Date(tx.timestamp).getTime()) < (7 * 24 * 60 * 60 * 1000)
+            );
+            
+            if (last7Days.length > 0 && balance > 0) {
+                const weekSpending = last7Days.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+                const dailyAverage = weekSpending / 7;
+                const daysUntilRunout = Math.floor(balance / dailyAverage);
+                
+                const runoutDate = new Date();
+                runoutDate.setDate(runoutDate.getDate() + daysUntilRunout);
+                
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const dateStr = `${monthNames[runoutDate.getMonth()]} ${runoutDate.getDate()}`;
+                
+                document.getElementById('runoutText').textContent = 
+                    `At this rate (Rp ${Math.round(dailyAverage).toLocaleString('id-ID')}/day), you'll run out by ${dateStr}`;
+            } else if (balance === 0) {
+                document.getElementById('runoutText').textContent = 'Your balance is empty. Add income to continue!';
+            } else {
+                document.getElementById('runoutText').textContent = 'Start spending to see predictions';
+            }
+        }
+        
+        // Goals Screen
+        function loadGoalsScreen() {
+            const list = document.getElementById('goalsList');
+            
+            if (goals.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🎯</div>
+                        <div class="empty-text">No savings goals yet.<br>Create your first goal!</div>
+                    </div>
+                `;
+            } else {
+                list.innerHTML = goals.map(goal => {
+                    const percent = Math.round((goal.current / goal.target) * 100);
+                    return `
+                        <div class="goal-card">
+                            <div class="goal-header">
+                                <div class="goal-icon">${goal.icon}</div>
+                                <div class="goal-info">
+                                    <div class="goal-name">${goal.name}</div>
+                                    <div class="goal-type-badge badge-${goal.goalType || 'needs'}">${goal.goalType === 'needs' ? 'Needs' : 'Wants'}</div>
+                                    <div class="goal-progress">Rp ${goal.current.toLocaleString('id-ID')} / Rp ${goal.target.toLocaleString('id-ID')}</div>
+                                </div>
+                                <div class="goal-percentage">${percent}%</div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: ${percent}%; background: #3B82F6;"></div>
+                            </div>
+                            <div class="goal-actions">
+                                <button class="goal-btn goal-btn-add" onclick="openAddMoneyGoalModal(${goal.id})">💰 Add Money</button>
+                                <button class="goal-btn goal-btn-delete" onclick="deleteGoal(${goal.id})">🗑️ Delete</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+        
+        // Goal Modals
+        window.openAddGoalModal = () => {
+            document.getElementById('addGoalModal').classList.add('show');
+            renderGoalCategories();
+            currentGoalType = 'needs';
+            
+            document.getElementById('goalNeedsBtn').onclick = () => {
+                currentGoalType = 'needs';
+                document.getElementById('goalNeedsBtn').classList.add('needs');
+                document.getElementById('goalWantsBtn').classList.remove('wants');
+            };
+            
+            document.getElementById('goalWantsBtn').onclick = () => {
+                currentGoalType = 'wants';
+                document.getElementById('goalWantsBtn').classList.add('wants');
+                document.getElementById('goalNeedsBtn').classList.remove('needs');
+            };
+        };
+        
+        window.closeAddGoalModal = () => {
+            document.getElementById('addGoalModal').classList.remove('show');
+            document.getElementById('goalNameInput').value = '';
+            document.getElementById('goalTargetInput').value = '';
+            selectedGoalCategory = null;
+            selectedGoalIcon = null;
+            currentGoalType = 'needs';
+        };
+        
+        function renderGoalCategories() {
+            const container = document.getElementById('goalCategoryButtons');
+            container.innerHTML = goalCategories.map(cat => `
+                <button class="category-btn" onclick="selectGoalCategory('${cat.name}', '${cat.icon}')">${cat.icon} ${cat.name}</button>
+            `).join('');
+        }
+        
+        let selectedGoalCategory = null;
+        let selectedGoalIcon = null;
+        
+        window.selectGoalCategory = (name, icon) => {
+            selectedGoalCategory = name;
+            selectedGoalIcon = icon;
+            document.querySelectorAll('#goalCategoryButtons .category-btn').forEach(btn => {
+                if (btn.textContent.includes(name)) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        };
+        
+        window.saveGoal = () => {
+            const name = document.getElementById('goalNameInput').value;
+            const target = parseInt(document.getElementById('goalTargetInput').value);
+            
+            if (!name || !target || !selectedGoalCategory) {
+                alert('Please fill all fields and select a category');
+                return;
+            }
+            
+            const newGoal = {
+                id: Date.now(),
+                name: name,
+                target: target,
+                current: 0,
+                category: selectedGoalCategory,
+                icon: selectedGoalIcon,
+                goalType: currentGoalType,
+                savingTransactions: []
+            };
+            
+            goals.push(newGoal);
+            saveData();
+            closeAddGoalModal();
+            loadGoalsScreen();
+            alert('Goal created! 🎯');
+        };
+        
+        window.openAddMoneyGoalModal = (goalId) => {
+            currentGoalId = goalId;
+            currentGoalAmount = 0;
+            currentGoalDescription = '';
+            const goal = goals.find(g => g.id === goalId);
+            if (goal) {
+                document.getElementById('addMoneyGoalTitle').textContent = `Add Money to ${goal.name}`;
+            }
+            document.getElementById('addMoneyGoalModal').classList.add('show');
+            renderGoalNumberPad();
+            updateGoalAmountDisplay();
+            
+            document.getElementById('goalDescriptionInput').oninput = (e) => {
+                currentGoalDescription = e.target.value;
+            };
+        };
+        
+        window.closeAddMoneyGoalModal = () => {
+            document.getElementById('addMoneyGoalModal').classList.remove('show');
+            currentGoalId = null;
+            currentGoalAmount = 0;
+            currentGoalDescription = '';
+            document.getElementById('goalDescriptionInput').value = '';
+        };
+        
+        function renderGoalNumberPad() {
+            const pad = document.getElementById('goalNumberPad');
+            const keys = ['1','2','3','4','5','6','7','8','9','0','00','⌫'];
+            pad.innerHTML = keys.map(k => `
+                <button class="number-btn" onclick="handleGoalNumber('${k}')">${k}</button>
+            `).join('');
+        }
+        
+        window.handleGoalNumber = (key) => {
+            if (key === '⌫') {
+                currentGoalAmount = Math.floor(currentGoalAmount / 10);
+            } else {
+                if (key === '00') {
+                    currentGoalAmount = currentGoalAmount * 100;
+                } else {
+                    currentGoalAmount = currentGoalAmount * 10 + parseInt(key);
+                }
+            }
+            updateGoalAmountDisplay();
+        };
+        
+        function updateGoalAmountDisplay() {
+            document.getElementById('goalAmountDisplay').textContent = `Rp ${currentGoalAmount.toLocaleString('id-ID')}`;
+        }
+        
+        window.addMoneyToGoal = () => {
+            if (currentGoalAmount === 0) {
+                alert('Please enter an amount');
+                return;
+            }
+            
+            if (currentGoalAmount > balance) {
+                alert('Insufficient balance!');
+                return;
+            }
+            
+            const goal = goals.find(g => g.id === currentGoalId);
+            if (goal) {
+                goal.current += currentGoalAmount;
+                balance -= currentGoalAmount;
+                
+                const note = currentGoalDescription || 'Saving';
+                const txId = Date.now();
+                
+                const newTx = {
+                    id: txId,
+                    name: `${goal.name} (${note})`,
+                    amount: -currentGoalAmount,
+                    type: goal.goalType || 'needs',
+                    category: 'Savings',
+                    icon: goal.icon,
+                    timestamp: new Date().toISOString(),
+                    isGoalSaving: true,
+                    goalId: currentGoalId
+                };
+                transactions.unshift(newTx);
+                
+                if (!goal.savingTransactions) goal.savingTransactions = [];
+                goal.savingTransactions.push({ txId, amount: currentGoalAmount, note });
+                
+                saveData();
+                closeAddMoneyGoalModal();
+                loadGoalsScreen();
+                alert('Money added to goal! 💰');
+            }
+        };
+        
+        window.deleteGoal = (goalId) => {
+            if (confirm('Delete this goal? Money will be returned to your balance.')) {
+                const goal = goals.find(g => g.id === goalId);
+                if (goal) {
+                    if (goal.current > 0) {
+                        balance += goal.current;
+                        
+                        const newTx = {
+                            id: Date.now(),
+                            name: `Cancel Saving: ${goal.name}`,
+                            amount: goal.current,
+                            type: 'income',
+                            category: 'Income',
+                            icon: '🔄',
+                            timestamp: new Date().toISOString()
+                        };
+                        transactions.unshift(newTx);
+                        
+                        if (goal.savingTransactions) {
+                            goal.savingTransactions.forEach(saving => {
+                                transactions = transactions.filter(tx => tx.id !== saving.txId);
+                            });
+                        }
+                    }
+                    
+                    goals = goals.filter(g => g.id !== goalId);
+                    saveData();
+                    loadGoalsScreen();
+                    alert('Goal deleted and money returned! ✅');
+                }
+            }
+        };
+        
+        // Initialize app
+        loadHomeScreen();
+        
+        if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                console.log('Service Worker registered:', registration);
+            })
+            .catch(error => {
+                console.log('Service Worker registration failed:', error);
+            });
+    });
+}
+    </script>
+</body>
+</html>
