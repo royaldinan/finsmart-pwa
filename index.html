@@ -6,12 +6,11 @@
     <meta name="theme-color" content="#3B82F6">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <!-- Tambahkan di dalam <head> tag -->
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E💰%3C/text%3E%3C/svg%3E">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="FinSmart">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E💰%3C/text%3E%3C/svg%3E">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="FinSmart">
     <title>FinSmart - Smart Finance</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -108,15 +107,25 @@
         .tx-name { font-weight: 500; font-size: 14px; }
         .tx-time { color: #9CA3AF; font-size: 12px; margin-top: 2px; }
         .tx-amount { font-weight: 600; font-size: 14px; }
-        .tx-delete {
-            background: #EF4444;
-            color: white;
+        .tx-actions {
+            display: flex;
+            gap: 4px;
+            margin-left: 8px;
+        }
+        .tx-edit, .tx-delete {
             border: none;
             border-radius: 6px;
             padding: 4px 8px;
             font-size: 10px;
             cursor: pointer;
-            margin-left: 8px;
+        }
+        .tx-edit {
+            background: #3B82F6;
+            color: white;
+        }
+        .tx-delete {
+            background: #EF4444;
+            color: white;
         }
         .badge {
             display: inline-block;
@@ -369,6 +378,7 @@
         }
         .goal-btn:active { transform: scale(0.95); }
         .goal-btn-add { background: #10B981; color: white; }
+        .goal-btn-edit { background: #F59E0B; color: white; }
         .goal-btn-delete { background: #EF4444; color: white; }
         
         .modal {
@@ -586,10 +596,32 @@
         </div>
     </div>
 
+    <!-- Edit Transaction Modal -->
+    <div id="editTransactionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Edit Transaction</div>
+            <div class="amount-display">
+                <div class="amount-value" id="editAmountDisplay">Rp 0</div>
+                <div class="amount-label">Enter amount</div>
+            </div>
+            <div class="number-pad" id="editNumberPad"></div>
+            <input type="text" class="input" id="editDescriptionInput" placeholder="Description">
+            <div class="category-buttons" id="editCategoryButtons"></div>
+            <div class="type-buttons">
+                <button class="type-btn needs" id="editNeedsBtn">Needs</button>
+                <button class="type-btn" id="editWantsBtn">Wants</button>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-secondary" onclick="closeEditTransactionModal()">Cancel</button>
+                <button class="modal-btn modal-btn-primary" onclick="saveEditTransaction()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Add Goal Modal -->
     <div id="addGoalModal" class="modal">
         <div class="modal-content">
-            <div class="modal-title">Create New Goal</div>
+            <div class="modal-title" id="goalModalTitle">Create New Goal</div>
             <input type="text" class="input" id="goalNameInput" placeholder="Goal name (e.g., New Laptop)">
             <input type="number" class="input" id="goalTargetInput" placeholder="Target amount (e.g., 8000000)">
             
@@ -604,7 +636,7 @@
             
             <div class="modal-buttons">
                 <button class="modal-btn modal-btn-secondary" onclick="closeAddGoalModal()">Cancel</button>
-                <button class="modal-btn modal-btn-primary" onclick="saveGoal()">Create Goal</button>
+                <button class="modal-btn modal-btn-primary" id="saveGoalBtn" onclick="saveGoal()">Create Goal</button>
             </div>
         </div>
     </div>
@@ -627,7 +659,6 @@
     </div>
 
     <script>
-        // Initialize data
         let balance = parseInt(localStorage.getItem('balance')) || 0;
         let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
         let templates = JSON.parse(localStorage.getItem('templates')) || [];
@@ -644,6 +675,15 @@
         let currentGoalId = null;
         let currentGoalDescription = '';
         let currentGoalType = 'needs';
+        
+        let editingTransactionId = null;
+        let editAmount = 0;
+        let editDescription = '';
+        let editCategory = '';
+        let editCategoryIcon = '';
+        let editType = 'needs';
+        
+        let editingGoalId = null;
         
         const categories = [
             { name: 'Food', icon: '🍔' },
@@ -673,7 +713,6 @@
             localStorage.setItem('goals', JSON.stringify(goals));
         }
         
-        // Time formatting function with full support
         function formatTimeAgo(timestamp) {
             const now = Date.now();
             const time = new Date(timestamp).getTime();
@@ -694,13 +733,11 @@
             if (weeks === 1) return '1 week ago';
             if (weeks < 4) return `${weeks} weeks ago`;
             
-            // Show date for older transactions (after 1 month)
             const date = new Date(timestamp);
             const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             return `${date.getDate()} ${monthNames[date.getMonth()]}`;
         }
         
-        // Update time displays every minute
         setInterval(() => {
             const currentScreen = document.querySelector('.screen:not(.hidden)');
             if (currentScreen && currentScreen.id === 'homeScreen') {
@@ -708,7 +745,6 @@
             }
         }, 60000);
         
-        // Settings
         window.toggleSettings = () => {
             showScreen('settings');
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -731,20 +767,143 @@
             }
         };
         
-        // Delete transaction with full reversal
+        window.editTransaction = (txId) => {
+            const tx = transactions.find(t => t.id === txId);
+            if (!tx) return;
+            
+            if (tx.isGoalSaving) {
+                alert('Cannot edit goal saving transactions. Please delete and add new transaction to the goal.');
+                return;
+            }
+            
+            editingTransactionId = txId;
+            editAmount = Math.abs(tx.amount);
+            editDescription = tx.name;
+            editCategory = tx.category;
+            editCategoryIcon = tx.icon;
+            editType = tx.type;
+            
+            document.getElementById('editDescriptionInput').value = editDescription;
+            updateEditAmountDisplay();
+            renderEditNumberPad();
+            renderEditCategories();
+            highlightEditCategory(editCategory);
+            
+            if (editType === 'needs') {
+                document.getElementById('editNeedsBtn').classList.add('needs');
+                document.getElementById('editWantsBtn').classList.remove('wants');
+            } else if (editType === 'wants') {
+                document.getElementById('editWantsBtn').classList.add('wants');
+                document.getElementById('editNeedsBtn').classList.remove('needs');
+            }
+            
+            document.getElementById('editTransactionModal').classList.add('show');
+            
+            document.getElementById('editNeedsBtn').onclick = () => {
+                editType = 'needs';
+                document.getElementById('editNeedsBtn').classList.add('needs');
+                document.getElementById('editWantsBtn').classList.remove('wants');
+            };
+            
+            document.getElementById('editWantsBtn').onclick = () => {
+                editType = 'wants';
+                document.getElementById('editWantsBtn').classList.add('wants');
+                document.getElementById('editNeedsBtn').classList.remove('needs');
+            };
+            
+            document.getElementById('editDescriptionInput').oninput = (e) => {
+                editDescription = e.target.value;
+            };
+        };
+        
+        window.closeEditTransactionModal = () => {
+            document.getElementById('editTransactionModal').classList.remove('show');
+            editingTransactionId = null;
+        };
+        
+        function renderEditNumberPad() {
+            const pad = document.getElementById('editNumberPad');
+            const keys = ['1','2','3','4','5','6','7','8','9','0','00','⌫'];
+            pad.innerHTML = keys.map(k => `
+                <button class="number-btn" onclick="handleEditNumber('${k}')">${k}</button>
+            `).join('');
+        }
+        
+        window.handleEditNumber = (key) => {
+            if (key === '⌫') {
+                editAmount = Math.floor(editAmount / 10);
+            } else {
+                if (key === '00') {
+                    editAmount = editAmount * 100;
+                } else {
+                    editAmount = editAmount * 10 + parseInt(key);
+                }
+            }
+            updateEditAmountDisplay();
+        };
+        
+        function updateEditAmountDisplay() {
+            document.getElementById('editAmountDisplay').textContent = `Rp ${editAmount.toLocaleString('id-ID')}`;
+        }
+        
+        function renderEditCategories() {
+            const container = document.getElementById('editCategoryButtons');
+            container.innerHTML = categories.map(cat => `
+                <button class="category-btn" onclick="selectEditCategory('${cat.name}', '${cat.icon}')">${cat.icon} ${cat.name}</button>
+            `).join('');
+        }
+        
+        window.selectEditCategory = (name, icon) => {
+            editCategory = name;
+            editCategoryIcon = icon;
+            highlightEditCategory(name);
+        };
+        
+        function highlightEditCategory(name) {
+            document.querySelectorAll('#editCategoryButtons .category-btn').forEach(btn => {
+                if (btn.textContent.includes(name)) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+        
+        window.saveEditTransaction = () => {
+            if (!editDescription || editAmount === 0 || !editCategory) {
+                alert('Please fill all fields');
+                return;
+            }
+            
+            const tx = transactions.find(t => t.id === editingTransactionId);
+            if (!tx) return;
+            
+            balance -= tx.amount;
+            
+            tx.name = editDescription;
+            tx.amount = tx.type === 'income' ? editAmount : -editAmount;
+            tx.category = editCategory;
+            tx.icon = editCategoryIcon;
+            tx.type = editType;
+            
+            balance += tx.amount;
+            
+            saveData();
+            closeEditTransactionModal();
+            loadHomeScreen();
+            alert('Transaction updated! ✅');
+        };
+        
         window.deleteTransaction = (txId) => {
             if (confirm('Delete this transaction?')) {
                 const tx = transactions.find(t => t.id === txId);
                 if (tx) {
-                    // Reverse the transaction amount
                     balance -= tx.amount;
                     
-                    // If it's a goal saving transaction, return money to goal
                     if (tx.isGoalSaving && tx.goalId) {
                         const goal = goals.find(g => g.id === tx.goalId);
                         if (goal) {
                             goal.current -= Math.abs(tx.amount);
-                            // Remove from goal's saving transactions
                             if (goal.savingTransactions) {
                                 goal.savingTransactions = goal.savingTransactions.filter(s => s.txId !== txId);
                             }
@@ -759,7 +918,6 @@
             }
         };
         
-        // Navigation
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', () => {
                 const screen = item.dataset.screen;
@@ -788,7 +946,6 @@
             if (screenName === 'goals') loadGoalsScreen();
         }
         
-        // Home Screen
         function loadHomeScreen() {
             const list = document.getElementById('transactionsList');
             
@@ -832,7 +989,10 @@
                                     ${tx.type === 'needs' ? 'Needs' : tx.type === 'wants' ? 'Wants' : 'Income'}
                                 </div>
                             </div>
-                            <button class="tx-delete" onclick="deleteTransaction(${tx.id})">×</button>
+                            <div class="tx-actions">
+                                ${!tx.isGoalSaving ? `<button class="tx-edit" onclick="editTransaction(${tx.id})">✏️</button>` : ''}
+                                <button class="tx-delete" onclick="deleteTransaction(${tx.id})">×</button>
+                            </div>
                         </div>
                     </div>
                 `}).join('');
@@ -873,7 +1033,6 @@
             }
         }
         
-        // Add Screen
         function initAddScreen() {
             renderTemplates();
             renderNumberPad();
@@ -1093,7 +1252,6 @@
             renderTemplates();
         }
         
-        // Stats Screen
         function loadStatsScreen() {
             const categoryStats = {};
             let needsTotal = 0;
@@ -1180,7 +1338,6 @@
             }
         }
         
-        // Goals Screen
         function loadGoalsScreen() {
             const list = document.getElementById('goalsList');
             
@@ -1209,7 +1366,8 @@
                                 <div class="progress" style="width: ${percent}%; background: #3B82F6;"></div>
                             </div>
                             <div class="goal-actions">
-                                <button class="goal-btn goal-btn-add" onclick="openAddMoneyGoalModal(${goal.id})">💰 Add Money</button>
+                                <button class="goal-btn goal-btn-add" onclick="openAddMoneyGoalModal(${goal.id})">💰 Add</button>
+                                <button class="goal-btn goal-btn-edit" onclick="editGoal(${goal.id})">✏️ Edit</button>
                                 <button class="goal-btn goal-btn-delete" onclick="deleteGoal(${goal.id})">🗑️ Delete</button>
                             </div>
                         </div>
@@ -1218,11 +1376,59 @@
             }
         }
         
-        // Goal Modals
         window.openAddGoalModal = () => {
+            editingGoalId = null;
+            document.getElementById('goalModalTitle').textContent = 'Create New Goal';
+            document.getElementById('saveGoalBtn').textContent = 'Create Goal';
+            document.getElementById('goalNameInput').value = '';
+            document.getElementById('goalTargetInput').value = '';
             document.getElementById('addGoalModal').classList.add('show');
             renderGoalCategories();
             currentGoalType = 'needs';
+            selectedGoalCategory = null;
+            selectedGoalIcon = null;
+            
+            document.getElementById('goalNeedsBtn').classList.add('needs');
+            document.getElementById('goalWantsBtn').classList.remove('wants');
+            
+            document.getElementById('goalNeedsBtn').onclick = () => {
+                currentGoalType = 'needs';
+                document.getElementById('goalNeedsBtn').classList.add('needs');
+                document.getElementById('goalWantsBtn').classList.remove('wants');
+            };
+            
+            document.getElementById('goalWantsBtn').onclick = () => {
+                currentGoalType = 'wants';
+                document.getElementById('goalWantsBtn').classList.add('wants');
+                document.getElementById('goalNeedsBtn').classList.remove('needs');
+            };
+        };
+        
+        window.editGoal = (goalId) => {
+            const goal = goals.find(g => g.id === goalId);
+            if (!goal) return;
+            
+            editingGoalId = goalId;
+            document.getElementById('goalModalTitle').textContent = 'Edit Goal';
+            document.getElementById('saveGoalBtn').textContent = 'Save Changes';
+            document.getElementById('goalNameInput').value = goal.name;
+            document.getElementById('goalTargetInput').value = goal.target;
+            document.getElementById('addGoalModal').classList.add('show');
+            renderGoalCategories();
+            
+            currentGoalType = goal.goalType || 'needs';
+            selectedGoalCategory = goal.category;
+            selectedGoalIcon = goal.icon;
+            
+            if (currentGoalType === 'needs') {
+                document.getElementById('goalNeedsBtn').classList.add('needs');
+                document.getElementById('goalWantsBtn').classList.remove('wants');
+            } else {
+                document.getElementById('goalWantsBtn').classList.add('wants');
+                document.getElementById('goalNeedsBtn').classList.remove('needs');
+            }
+            
+            highlightGoalCategory(selectedGoalCategory);
             
             document.getElementById('goalNeedsBtn').onclick = () => {
                 currentGoalType = 'needs';
@@ -1244,6 +1450,7 @@
             selectedGoalCategory = null;
             selectedGoalIcon = null;
             currentGoalType = 'needs';
+            editingGoalId = null;
         };
         
         function renderGoalCategories() {
@@ -1259,6 +1466,10 @@
         window.selectGoalCategory = (name, icon) => {
             selectedGoalCategory = name;
             selectedGoalIcon = icon;
+            highlightGoalCategory(name);
+        };
+        
+        function highlightGoalCategory(name) {
             document.querySelectorAll('#goalCategoryButtons .category-btn').forEach(btn => {
                 if (btn.textContent.includes(name)) {
                     btn.classList.add('active');
@@ -1266,7 +1477,7 @@
                     btn.classList.remove('active');
                 }
             });
-        };
+        }
         
         window.saveGoal = () => {
             const name = document.getElementById('goalNameInput').value;
@@ -1277,22 +1488,38 @@
                 return;
             }
             
-            const newGoal = {
-                id: Date.now(),
-                name: name,
-                target: target,
-                current: 0,
-                category: selectedGoalCategory,
-                icon: selectedGoalIcon,
-                goalType: currentGoalType,
-                savingTransactions: []
-            };
-            
-            goals.push(newGoal);
-            saveData();
-            closeAddGoalModal();
-            loadGoalsScreen();
-            alert('Goal created! 🎯');
+            if (editingGoalId) {
+                const goal = goals.find(g => g.id === editingGoalId);
+                if (goal) {
+                    goal.name = name;
+                    goal.target = target;
+                    goal.category = selectedGoalCategory;
+                    goal.icon = selectedGoalIcon;
+                    goal.goalType = currentGoalType;
+                    
+                    saveData();
+                    closeAddGoalModal();
+                    loadGoalsScreen();
+                    alert('Goal updated! ✅');
+                }
+            } else {
+                const newGoal = {
+                    id: Date.now(),
+                    name: name,
+                    target: target,
+                    current: 0,
+                    category: selectedGoalCategory,
+                    icon: selectedGoalIcon,
+                    goalType: currentGoalType,
+                    savingTransactions: []
+                };
+                
+                goals.push(newGoal);
+                saveData();
+                closeAddGoalModal();
+                loadGoalsScreen();
+                alert('Goal created! 🎯');
+            }
         };
         
         window.openAddMoneyGoalModal = (goalId) => {
@@ -1393,23 +1620,12 @@
                 if (goal) {
                     if (goal.current > 0) {
                         balance += goal.current;
-                        
-                        const newTx = {
-                            id: Date.now(),
-                            name: `Cancel Saving: ${goal.name}`,
-                            amount: goal.current,
-                            type: 'income',
-                            category: 'Income',
-                            icon: '🔄',
-                            timestamp: new Date().toISOString()
-                        };
-                        transactions.unshift(newTx);
-                        
-                        if (goal.savingTransactions) {
-                            goal.savingTransactions.forEach(saving => {
-                                transactions = transactions.filter(tx => tx.id !== saving.txId);
-                            });
-                        }
+                    }
+                    
+                    if (goal.savingTransactions && goal.savingTransactions.length > 0) {
+                        goal.savingTransactions.forEach(saving => {
+                            transactions = transactions.filter(tx => tx.id !== saving.txId);
+                        });
                     }
                     
                     goals = goals.filter(g => g.id !== goalId);
@@ -1420,20 +1636,19 @@
             }
         };
         
-        // Initialize app
         loadHomeScreen();
         
-       if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then(registration => {
-                console.log('Service Worker registered:', registration);
-            })
-            .catch(error => {
-                console.log('Service Worker registration failed:', error);
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registered:', registration);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker registration failed:', error);
+                    });
             });
-    });
-}
+        }
     </script>
 </body>
 </html>
