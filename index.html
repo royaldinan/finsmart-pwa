@@ -713,6 +713,23 @@
             localStorage.setItem('goals', JSON.stringify(goals));
         }
         
+        // FIXED: Helper function untuk mendapatkan start of week (Senin)
+        function getStartOfWeek(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = day === 0 ? -6 : 1 - day; // Jika Minggu (0), mundur 6 hari; jika bukan, mundur ke Senin
+            d.setDate(d.getDate() + diff);
+            d.setHours(0, 0, 0, 0);
+            return d;
+        }
+        
+        // FIXED: Helper function untuk mendapatkan start of month (tanggal 1)
+        function getStartOfMonth(date) {
+            const d = new Date(date.getFullYear(), date.getMonth(), 1);
+            d.setHours(0, 0, 0, 0);
+            return d;
+        }
+        
         function formatTimeAgo(timestamp) {
             const now = Date.now();
             const time = new Date(timestamp).getTime();
@@ -1000,16 +1017,20 @@
             
             document.getElementById('totalBalance').textContent = `Rp ${balance.toLocaleString('id-ID')}`;
             
-            const now = Date.now();
-            const weekMs = 7 * 24 * 60 * 60 * 1000;
+            // FIXED: Perhitungan minggu ini (Senin - Minggu)
+            const now = new Date();
+            const startOfWeek = getStartOfWeek(now);
+            
             const weekSpending = transactions
-                .filter(t => t.amount < 0 && (now - new Date(t.timestamp).getTime()) < weekMs)
+                .filter(t => t.amount < 0 && new Date(t.timestamp) >= startOfWeek)
                 .reduce((sum, t) => sum + Math.abs(t.amount), 0);
             document.getElementById('weekSpending').textContent = `-Rp ${weekSpending.toLocaleString('id-ID')}`;
             
-            const monthMs = 30 * 24 * 60 * 60 * 1000;
+            // FIXED: Perhitungan bulan ini (tanggal 1 - akhir bulan)
+            const startOfMonth = getStartOfMonth(now);
+            
             const monthSpending = transactions
-                .filter(t => t.amount < 0 && (now - new Date(t.timestamp).getTime()) < monthMs)
+                .filter(t => t.amount < 0 && new Date(t.timestamp) >= startOfMonth)
                 .reduce((sum, t) => sum + Math.abs(t.amount), 0);
             document.getElementById('monthSpending').textContent = `-Rp ${monthSpending.toLocaleString('id-ID')}`;
             
@@ -1313,14 +1334,20 @@
                 statsContainer.innerHTML = statsHtml;
             }
             
-            const now = Date.now();
-            const last7Days = transactions.filter(tx => 
-                tx.amount < 0 && (now - new Date(tx.timestamp).getTime()) < (7 * 24 * 60 * 60 * 1000)
+            // FIXED: Gunakan transaksi minggu ini untuk prediksi (Senin - Minggu)
+            const now = new Date();
+            const startOfWeek = getStartOfWeek(now);
+            
+            const weekTransactions = transactions.filter(tx => 
+                tx.amount < 0 && new Date(tx.timestamp) >= startOfWeek
             );
             
-            if (last7Days.length > 0 && balance > 0) {
-                const weekSpending = last7Days.reduce((sum, t) => sum + Math.abs(t.amount), 0);
-                const dailyAverage = weekSpending / 7;
+            if (weekTransactions.length > 0 && balance > 0) {
+                const weekSpending = weekTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+                
+                // Hitung hari yang sudah berlalu di minggu ini
+                const daysIntoWeek = Math.floor((now - startOfWeek) / (24 * 60 * 60 * 1000)) + 1;
+                const dailyAverage = weekSpending / daysIntoWeek;
                 const daysUntilRunout = Math.floor(balance / dailyAverage);
                 
                 const runoutDate = new Date();
