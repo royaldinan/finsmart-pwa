@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E💰%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect fill='%23F5F5F5' width='192' height='192' rx='42'/%3E%3Cdefs%3E%3CradialGradient id='grad1' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' style='stop-color:%23E91E63;stop-opacity:1'/%3E%3Cstop offset='50%25' style='stop-color:%23D81B60;stop-opacity:1'/%3E%3Cstop offset='100%25' style='stop-color:%233F51B5;stop-opacity:1'/%3E%3C/radialGradient%3E%3ClinearGradient id='grad2' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23E91E63'/%3E%3Cstop offset='100%25' style='stop-color:%235E35B1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='96' cy='96' r='60' fill='%23512DA8'/%3E%3Ccircle cx='96' cy='96' r='58' fill='url(%23grad2)' opacity='0.9'/%3E%3Ctext x='96' y='125' font-family='Arial, sans-serif' font-size='72' font-weight='bold' fill='white' text-anchor='middle'%3E%24%3C/text%3E%3C/svg%3E">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="FinSmart">
@@ -447,6 +447,33 @@
             cursor: pointer;
             text-decoration: none;
         }
+        
+        /* Tutorial Styles */
+        .tutorial-highlight {
+            background: rgba(59, 130, 246, 0.1);
+            border: 2px solid #3B82F6;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .tutorial-step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .tutorial-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #D1D5DB;
+            transition: all 0.3s;
+        }
+        .tutorial-dot.active {
+            background: #3B82F6;
+            width: 24px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -454,7 +481,7 @@
         <div class="header">
             <h1 id="headerTitle">FinSmart</h1>
             <div class="header-actions">
-                <button class="settings-btn" onclick="toggleSettings()">⚙️</button>
+                <button class="settings-btn" onclick="toggleSettings()">⚙️</button>
             </div>
         </div>
         
@@ -476,7 +503,7 @@
             </div>
             
             <div class="alert" id="alertBox">
-                <div class="alert-title">⚠️ Spending Alert</div>
+                <div class="alert-title">⚠️ ¸ Spending Alert</div>
                 <div class="alert-text" id="alertText">Start tracking your expenses!</div>
             </div>
             
@@ -493,6 +520,7 @@
             <div class="section">
                 <div class="section-header">
                     <div class="section-title">⚡ Quick Add</div>
+
                     <button id="toggleTemplates" class="btn-link">Show All</button>
                 </div>
                 <div class="templates-grid" id="templatesGrid"></div>
@@ -517,7 +545,7 @@
                 
                 <div class="action-buttons">
                     <button class="add-btn" id="addExpenseBtn">Add Expense</button>
-                    <button class="save-template-btn" id="saveTemplateBtn">⭐</button>
+                    <button class="save-template-btn" id="saveTemplateBtn">⭐</button>
                 </div>
                 
                 <div class="action-buttons">
@@ -569,14 +597,14 @@
         <div id="settingsScreen" class="screen hidden">
             <div class="settings-menu">
                 <div class="settings-item" onclick="factoryReset()">
-                    <div class="settings-item-title">🔄 Factory Reset</div>
+                   <div class="settings-item-title">🔄 Factory Reset</div>
                     <div class="settings-item-desc">Delete all data and start fresh</div>
                 </div>
             </div>
         </div>
         
         <!-- Bottom Navigation -->
-        <div class="bottom-nav">
+         <div class="bottom-nav">
             <div class="nav-item active" data-screen="home">
                 <div class="nav-icon">📱</div>
                 <div class="nav-label">Home</div>
@@ -596,7 +624,7 @@
         </div>
     </div>
 
-    <!-- Edit Transaction Modal -->
+    <!-- Edit Transaction Modal (WITH DATE/TIME INPUT) -->
     <div id="editTransactionModal" class="modal">
         <div class="modal-content">
             <div class="modal-title">Edit Transaction</div>
@@ -606,6 +634,11 @@
             </div>
             <div class="number-pad" id="editNumberPad"></div>
             <input type="text" class="input" id="editDescriptionInput" placeholder="Description">
+            
+            <div class="section-title" style="margin: 12px 0 8px 0; font-size: 14px;">… Transaction Date & Time 📅⏱️</div>
+
+            <input type="datetime-local" class="input" id="editDateTimeInput">
+            
             <div class="category-buttons" id="editCategoryButtons"></div>
             <div class="type-buttons">
                 <button class="type-btn needs" id="editNeedsBtn">Needs</button>
@@ -658,6 +691,19 @@
         </div>
     </div>
 
+    <!-- Tutorial Modal -->
+    <div id="tutorialModal" class="modal">
+        <div class="modal-content" style="max-height: 85vh; overflow-y: auto;">
+            <div class="tutorial-step-indicator" id="tutorialIndicator"></div>
+<div class="modal-title" id="tutorialTitle">Welcome to FinSmart! 👋</div>
+            <div id="tutorialContent" style="margin-bottom: 16px;"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-secondary" id="skipTutorialBtn">Skip Tutorial</button>
+                <button class="modal-btn modal-btn-primary" id="nextTutorialBtn">Next</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let balance = parseInt(localStorage.getItem('balance')) || 0;
         let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
@@ -682,6 +728,7 @@
         let editCategory = '';
         let editCategoryIcon = '';
         let editType = 'needs';
+        let editDateTime = '';
         
         let editingGoalId = null;
         
@@ -706,6 +753,208 @@
             { name: 'Other', icon: '🎯' }
         ];
         
+        // Tutorial System
+        let currentTutorialStep = 0;
+        const tutorialSteps = [
+            {
+                title: "Welcome to FinSmart! 👋",
+                content: `
+                    <div style="text-align: center; padding: 20px 0;">
+                        <div style="font-size: 64px; margin-bottom: 16px;">💰</div>
+                        <p style="font-size: 16px; line-height: 1.6; color: #4B5563;">
+                            Your smart personal finance tracker! Let's take a quick tour to help you get started.
+                        </p>
+                    </div>
+                `
+            },
+            {
+                title: "📱 Home Screen",
+                content: `
+                    <div class="tutorial-highlight">
+                        <strong>💳 Balance Card</strong><br>
+                        See your total balance, weekly spending, and monthly spending at a glance.
+                    </div>
+                    <div class="tutorial-highlight">
+                        <strong>⚠️ Spending Alert</strong><br>
+                        Get notified about your spending habits and stay on track.
+                    </div>
+                    <div class="tutorial-highlight">
+                        <strong>📋 Recent Transactions</strong><br>
+                        View your latest transactions with timestamps and categories.
+                    </div>
+                `
+            },
+            {
+                title: "💵 Add Transaction",
+                content: `
+                    <div class="tutorial-highlight">
+                        <strong>⭐ Quick Templates</strong><br>
+                        Save frequently used transactions for one-tap adding!
+                    </div>
+                    <div class="tutorial-highlight">
+                        <strong>🔢 Number Pad</strong><br>
+                        Enter amounts easily with our custom number pad.
+                    </div>
+                    <div class="tutorial-highlight">
+                        <strong>🏷️ Categories</strong><br>
+                        Organize spending: Food, Transport, Housing, etc.
+                    </div>
+                    <div class="tutorial-highlight">
+                        <strong>🎯 Needs vs Wants</strong><br>
+                        Track if it's essential (Needs) or optional (Wants).
+                    </div>
+                    <div class="tutorial-highlight">
+                        <strong>💰 Add Income</strong><br>
+                        Don't forget to add your income too!
+                    </div>
+                `
+            },
+            {
+                title: "✏️ Edit Transactions",
+                content: `
+                    <div class="tutorial-highlight">
+                        <strong>🔄 Edit Anytime</strong><br>
+                        Click the ✏️ button on any transaction to edit it.
+                    </div>
+                    <div class="tutorial-highlight">
+                        <strong>📅 Change Date & Time</strong><br>
+                        You can modify when the transaction occurred!
+                    </div>
+                    <div style="background: #FEF3C7; border: 1px solid #FCD34D; border-radius: 8px; padding: 12px; margin-top: 8px;">
+                        <strong style="color: #92400E;">⚠️ Important:</strong><br>
+                        <span style="color: #92400E; font-size: 12px;">
+                            Changing the date/time will affect your weekly and monthly spending calculations!
+                        </span>
+                    </div>
+                    <div class="tutorial-highlight">
+                        <strong>🗑️ Delete Option</strong><br>
+                        Remove transactions with the × button.
+                    </div>
+                `
+            },
+            {
+                title: "📊 Statistics",
+                content: `
+                    <div class="tutorial-highlight">
+                        <strong>📈 Category Breakdown</strong><br>
+                        See where your money goes with visual charts.
+                    </div>
+                    <div class="tutorial-highlight">
+                        <strong>🎯 Needs vs Wants Ratio</strong><br>
+                        Monitor your spending balance between essentials and extras.
+                    </div>
+                    <div class="tutorial-highlight">
+                        <strong>🔴 Runout Prediction</strong><br>
+                        Get predictions on when your balance might run out based on current spending habits.
+                    </div>
+                `
+            },
+            {
+                title: "🎯 Savings Goals",
+                content: `
+                    <div class="tutorial-highlight">
+                        <strong>🎯 Create Goals</strong><br>
+                        Set targets for things you want to save for (laptop, vacation, emergency fund, etc.)
+                    </div>
+                    <div class="tutorial-highlight">
+                        <strong>💰 Add Money</strong><br>
+                        Move money from your balance into your goal savings.
+                    </div>
+                    <div class="tutorial-highlight">
+                        <strong>📊 Track Progress</strong><br>
+                        See percentage and amount saved toward each goal.
+                    </div>
+                    <div class="tutorial-highlight">
+                        <strong>🏷️ 10 Goal Categories</strong><br>
+                        Emergency Fund, Gadgets, Vacation, Vehicle, Education, Investment, Home, Health, Wedding, and Other.
+                    </div>
+                `
+            },
+            {
+                title: "🚀 Ready to Go!",
+                content: `
+                    <div style="text-align: center; padding: 20px 0;">
+                        <div style="font-size: 64px; margin-bottom: 16px;">🎉</div>
+                        <p style="font-size: 16px; line-height: 1.6; color: #4B5563; margin-bottom: 16px;">
+                            You're all set! Here are some pro tips:
+                        </p>
+                    </div>
+                    <div class="tutorial-highlight">
+                        <strong>💡 Pro Tip #1:</strong><br>
+                        Add income first so you have a balance to work with!
+                    </div>
+                    <div class="tutorial-highlight">
+                        <strong>💡 Pro Tip #2:</strong><br>
+                        Save your frequent expenses as templates for quick adding.
+                    </div>
+                    <div class="tutorial-highlight">
+                        <strong>💡 Pro Tip #3:</strong><br>
+                        Check Statistics regularly to understand your spending patterns.
+                    </div>
+                    <div class="tutorial-highlight">
+                        <strong>💡 Pro Tip #4:</strong><br>
+                        Set realistic savings goals to stay motivated!
+                    </div>
+                    <div style="text-align: center; margin-top: 20px; font-size: 14px; color: #6B7280;">
+                        Tap "Get Started! 🚀" to begin your financial journey!
+                    </div>
+                `
+            }
+        ];
+        
+        function initTutorial() {
+            const hasSeenTutorial = localStorage.getItem('hasSeenTutorial');
+            if (!hasSeenTutorial) {
+                setTimeout(() => {
+                    showTutorial();
+                }, 800);
+            }
+        }
+        
+        function showTutorial() {
+            currentTutorialStep = 0;
+            document.getElementById('tutorialModal').classList.add('show');
+            updateTutorialContent();
+        }
+        
+        function updateTutorialContent() {
+            const step = tutorialSteps[currentTutorialStep];
+            document.getElementById('tutorialTitle').textContent = step.title;
+            document.getElementById('tutorialContent').innerHTML = step.content;
+            
+            // Update indicator dots
+            const indicator = document.getElementById('tutorialIndicator');
+            indicator.innerHTML = tutorialSteps.map((_, i) => 
+                `<div class="tutorial-dot ${i === currentTutorialStep ? 'active' : ''}"></div>`
+            ).join('');
+            
+            // Update next button text
+            const nextBtn = document.getElementById('nextTutorialBtn');
+            if (currentTutorialStep === tutorialSteps.length - 1) {
+                nextBtn.textContent = 'Get Started! 🚀';
+            } else {
+                nextBtn.textContent = 'Next';
+            }
+        }
+        
+        document.getElementById('nextTutorialBtn').onclick = () => {
+            if (currentTutorialStep < tutorialSteps.length - 1) {
+                currentTutorialStep++;
+                updateTutorialContent();
+            } else {
+                closeTutorial();
+            }
+        };
+        
+        document.getElementById('skipTutorialBtn').onclick = () => {
+            closeTutorial();
+        };
+        
+        function closeTutorial() {
+            document.getElementById('tutorialModal').classList.remove('show');
+            localStorage.setItem('hasSeenTutorial', 'true');
+        }
+        
         function saveData() {
             localStorage.setItem('balance', balance);
             localStorage.setItem('transactions', JSON.stringify(transactions));
@@ -713,17 +962,15 @@
             localStorage.setItem('goals', JSON.stringify(goals));
         }
         
-        // FIXED: Helper function untuk mendapatkan start of week (Senin)
         function getStartOfWeek(date) {
             const d = new Date(date);
             const day = d.getDay();
-            const diff = day === 0 ? -6 : 1 - day; // Jika Minggu (0), mundur 6 hari; jika bukan, mundur ke Senin
+            const diff = day === 0 ? -6 : 1 - day;
             d.setDate(d.getDate() + diff);
             d.setHours(0, 0, 0, 0);
             return d;
         }
         
-        // FIXED: Helper function untuk mendapatkan start of month (tanggal 1)
         function getStartOfMonth(date) {
             const d = new Date(date.getFullYear(), date.getMonth(), 1);
             d.setHours(0, 0, 0, 0);
@@ -799,8 +1046,20 @@
             editCategory = tx.category;
             editCategoryIcon = tx.icon;
             editType = tx.type;
+            editDateTime = tx.timestamp;
             
             document.getElementById('editDescriptionInput').value = editDescription;
+            
+            // Format datetime for input
+            const dt = new Date(editDateTime);
+            const year = dt.getFullYear();
+            const month = String(dt.getMonth() + 1).padStart(2, '0');
+            const day = String(dt.getDate()).padStart(2, '0');
+            const hours = String(dt.getHours()).padStart(2, '0');
+            const minutes = String(dt.getMinutes()).padStart(2, '0');
+            const formattedDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+            document.getElementById('editDateTimeInput').value = formattedDateTime;
+            
             updateEditAmountDisplay();
             renderEditNumberPad();
             renderEditCategories();
@@ -830,6 +1089,10 @@
             
             document.getElementById('editDescriptionInput').oninput = (e) => {
                 editDescription = e.target.value;
+            };
+            
+            document.getElementById('editDateTimeInput').onchange = (e) => {
+                editDateTime = new Date(e.target.value).toISOString();
             };
         };
         
@@ -902,13 +1165,17 @@
             tx.category = editCategory;
             tx.icon = editCategoryIcon;
             tx.type = editType;
+            tx.timestamp = editDateTime;
             
             balance += tx.amount;
+            
+            // Re-sort transactions by timestamp
+            transactions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             
             saveData();
             closeEditTransactionModal();
             loadHomeScreen();
-            alert('Transaction updated! ✅');
+            alert('Transaction updated! The date/time change will affect weekly/monthly calculations. ✅');
         };
         
         window.deleteTransaction = (txId) => {
@@ -1017,7 +1284,6 @@
             
             document.getElementById('totalBalance').textContent = `Rp ${balance.toLocaleString('id-ID')}`;
             
-            // FIXED: Perhitungan minggu ini (Senin - Minggu)
             const now = new Date();
             const startOfWeek = getStartOfWeek(now);
             
@@ -1026,7 +1292,6 @@
                 .reduce((sum, t) => sum + Math.abs(t.amount), 0);
             document.getElementById('weekSpending').textContent = `-Rp ${weekSpending.toLocaleString('id-ID')}`;
             
-            // FIXED: Perhitungan bulan ini (tanggal 1 - akhir bulan)
             const startOfMonth = getStartOfMonth(now);
             
             const monthSpending = transactions
@@ -1173,25 +1438,23 @@
             container.innerHTML = categories.map(cat => `
                 <button class="category-btn" onclick="selectCategory('${cat.name}', '${cat.icon}')">${cat.icon} ${cat.name}</button>
             `).join('');
-        }
-        
-        window.selectCategory = (name, icon) => {
-            currentCategory = name;
-            currentCategoryIcon = icon;
-            highlightCategory(name);
-        };
-        
-        function highlightCategory(name) {
-            document.querySelectorAll('#categoryButtons .category-btn').forEach(btn => {
-                if (btn.textContent.includes(name)) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
-        }
-        
-        function addExpense() {
+}
+    window.selectCategory = (name, icon) => {
+        currentCategory = name;
+        currentCategoryIcon = icon;
+        highlightCategory(name);
+    };
+    
+    function highlightCategory(name) {
+        document.querySelectorAll('#categoryButtons .category-btn').forEach(btn => {
+            if (btn.textContent.includes(name)) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+    function addExpense() {
             if (!currentDescription || currentAmount === 0 || !currentCategory) {
                 alert('Please fill all fields');
                 return;
@@ -1208,6 +1471,7 @@
             };
             
             transactions.unshift(newTx);
+            transactions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             balance -= currentAmount;
             saveData();
             
@@ -1232,6 +1496,7 @@
             };
             
             transactions.unshift(newTx);
+            transactions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             balance += currentAmount;
             saveData();
             
@@ -1334,7 +1599,6 @@
                 statsContainer.innerHTML = statsHtml;
             }
             
-            // FIXED: Gunakan transaksi minggu ini untuk prediksi (Senin - Minggu)
             const now = new Date();
             const startOfWeek = getStartOfWeek(now);
             
@@ -1345,7 +1609,6 @@
             if (weekTransactions.length > 0 && balance > 0) {
                 const weekSpending = weekTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
                 
-                // Hitung hari yang sudah berlalu di minggu ini
                 const daysIntoWeek = Math.floor((now - startOfWeek) / (24 * 60 * 60 * 1000)) + 1;
                 const dailyAverage = weekSpending / daysIntoWeek;
                 const daysUntilRunout = Math.floor(balance / dailyAverage);
@@ -1630,6 +1893,7 @@
                     goalId: currentGoalId
                 };
                 transactions.unshift(newTx);
+                transactions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                 
                 if (!goal.savingTransactions) goal.savingTransactions = [];
                 goal.savingTransactions.push({ txId, amount: currentGoalAmount, note });
@@ -1663,7 +1927,9 @@
             }
         };
         
+        // Initialize app
         loadHomeScreen();
+        initTutorial();
         
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -1677,5 +1943,7 @@
             });
         }
     </script>
+
+
 </body>
 </html>
