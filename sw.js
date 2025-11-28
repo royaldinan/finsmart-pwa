@@ -1,4 +1,4 @@
-const CACHE_NAME = 'finsmart-v4';
+const CACHE_NAME = 'finsmart-v5';
 const urlsToCache = [
   './',
   './index.html'
@@ -47,3 +47,4 @@ self.addEventListener('fetch', event => {
   );
 
 });
+
